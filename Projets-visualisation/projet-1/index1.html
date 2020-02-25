@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8" />
+<!-- <link rel="stylesheet" src="style.css"/> -->
+<script src="d3.js"></script>
+<style>
+  .bar {
+    fill: steelblue;
+  }
+
+  .axis {
+    font: 10px sans-serif;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+  .tooltip {
+    position: absolute;
+    text-align: center;
+    max-width: 70px;
+    max-height: 30px;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    margin-top: -30px;
+    font: 10px sans-serif;
+    background: black;
+    color: white;
+    pointer-events: none;
+  }
+</style>
+ </head>
+<body>
+  <script>
+    // definir les marges
+    var margin = { top: 20, right: 20, bottom: 90, left: 150 },
+      width = 800 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+    // echelle des axex
+    var x = d3.scale.ordinal().rangeRoundBands([0, width], 0.1);
+
+    var y = d3.scale.linear().range([height, 0]);
+
+    // ajout des axes
+    var xAxis = d3.svg
+      .axis()
+      .scale(x)
+      .orient("bottom");
+
+    var yAxis = d3.svg
+      .axis()
+      .scale(y)
+      .orient("left")
+      .ticks(20);
+
+    // ajout du svg
+    var svg = d3
+      .select("body")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right + 600)
+      .attr("height", height + margin.top + margin.bottom + 100)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    //text de l'axe des ordonnees
+    svg
+      .append("text")
+      .text("Nombre de voix")
+      .attr("x", -80)
+      .attr("y", -80)
+      .style("font-size", "14px")
+      .style("text-anchor", "end")
+      .style("font-weight", "bold")
+      .attr("transform", "rotate(-90)");
+    //text de l'axe des abcisses
+    svg
+      .append("text")
+      .text("Capitales Régionales")
+      .attr("x", 350)
+      .attr("y", 400)
+      .style("font-size", "14px")
+      .style("text-anchor", "end")
+      .style("font-weight", "bold");
+    //definir un tooltip pour informer du nombre exact de voix de chaque candidat
+    var div = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .attr("x", width - 300)
+      .attr("y", 0)
+      .style("opacity", 0);
+    //chargement des donnees a partir du fichier data.csv et initialisation du premier candidat
+    d3.csv("data.csv", function(error, data) {
+      var candidats = Object.keys(data[0]).filter(function(d) {
+        return (d != "Region") & (d != "couleur") & (d != "id");
+      });
+      var candidat_selected = candidats[0];
+      //definir des donnees representatif des deux axes
+      y.domain([
+        0,
+        d3.max(data, function(d) {
+          return +d[candidat_selected] + 20000;
+        })
+      ]);
+
+      x.domain(
+        data.map(function(d) {
+          return d.Region;
+        })
+      );
+      //definir le positionnement des axes dans le svg
+      var xAxis = d3.svg
+        .axis()
+        .scale(x)
+        .orient("bottom");
+
+      var yAxis = d3.svg
+        .axis()
+        .scale(y)
+        .orient("left");
+      //ajout des noms des region sur l'axe des abcisses
+      svg
+        .append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+        .selectAll("text")
+        .style("font-size", "14px")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", "-.55em")
+        .attr("transform", "rotate(-60)");
+
+      svg
+        .append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+      //titre du document en fonction du candidat selectionne
+      svg
+        .append("text")
+        .attr("class", "titre")
+        .attr("x", 200)
+        .attr("y", 10)
+        .style("font-weight", "bold")
+        .text("Nombre de voix du candidat Idrissa seck");
+      //ajout des barres
+      svg
+        .selectAll("rectangle")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("class", "rectangle")
+        .style("fill", function(d) {
+          return d.couleur;
+        })
+        .attr("width", width / data.length - 10)
+        .attr("height", function(d) {
+          return height - y(+d[candidat_selected]);
+        })
+        .attr("x", function(d, i) {
+          return (width / data.length) * i + 10;
+        })
+        .attr("y", function(d) {
+          return y(+d[candidat_selected]);
+        })
+        .on("mouseover", function(d) {
+          div
+            .transition()
+            .duration(200)
+            .style("opacity", 0.9);
+          div
+            .html("nombre de voix : " + d[candidat_selected])
+            .style("left", d3.event.pageX + 10 + "px")
+            .style("top", d3.event.pageY - 50 + "px");
+        })
+        .on("mouseout", function(d) {
+          div
+            .transition()
+            .duration(500)
+            .style("opacity", 0);
+        });
+      //ajout de la liste deroulante
+      var item_selected = d3
+        .select("body")
+        .append("select")
+        .attr("id", "dropdown")
+        .on("change", function(d) {
+          candidat_selected = document.getElementById("dropdown");
+          //changement de l'echelle de l'axe des ordonnee en fonction du nombre de voix du candidat selectionne
+          y.domain([
+            0,
+            d3.max(data, function(d) {
+              return +d[candidat_selected.value];
+            })
+          ]);
+          
+          yAxis.scale(y);
+          //changement dynamique du titre en fonction du candidat selectionne
+          d3.selectAll(".titre").text(
+            "Nombre de voix du candidat " + candidat_selected.value
+          );
+          //changement dynamique du diagramme en fonction du candidat selectionne
+          d3.selectAll(".rectangle")
+            .transition()
+            .attr("height", function(d) {
+              return height - y(+d[candidat_selected.value]);
+            })
+            .attr("x", function(d, i) {
+              return (width / data.length) * i + 10;
+            })
+            .attr("y", function(d) {
+              return y(+d[candidat_selected.value]);
+            })
+            .ease("linear");
+          d3.selectAll(".rectangle")
+            .on("mouseover", function(d) {
+              div
+                .transition()
+                .duration(200)
+                .style("opacity", 0.9);
+              div
+                .html("nombre de voix : " + d[candidat_selected.value])
+                .style("left", d3.event.pageX + 10 + "px")
+                .style("top", d3.event.pageY - 50 + "px");
+            })
+            .on("mouseout", function(d) {
+              div
+                .transition()
+                .duration(500)
+                .style("opacity", 0);
+            });
+          d3.selectAll("g.y.axis")
+            .transition()
+            .call(yAxis);
+        });
+      //ajout des options de la liste deroulante
+      item_selected
+        .selectAll("option")
+        .data(candidats)
+        .enter()
+        .append("option")
+        .attr("value", function(d) {
+          return d;
+        })
+        .text(function(d) {
+          return d;
+        });
+      //configuration de la legende
+      svg
+        .selectAll("bar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("x", 700)
+        .attr("y", function(d) {
+          return d.id * 25;
+        })
+        .attr("width", 10)
+        .attr("height", 10)
+        .style("fill", function(d) {
+          return d.couleur;
+        });
+
+      var texts = svg
+        .selectAll("myTexts")
+        .data(data)
+        .enter()
+        .append("text");
+
+      texts
+        .attr("x", 720)
+        .attr("y", function(d) {
+          return d.id * 26;
+        })
+        .text(function(d) {
+          return d.Region;
+        });
+    });
+  </script>
+</body>
