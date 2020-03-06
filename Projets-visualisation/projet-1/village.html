@@ -1,0 +1,214 @@
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>
+            mon beau village
+        </title>
+        <script src="d3.js"></script>
+        <style>
+            .fond{
+              background: linear-gradient(rgba(3, 88, 224, 0.513), rgba(0, 0, 0, 0));
+            }
+            .case{
+                fill: rgba(128, 64, 22, 0.89);
+            }
+            .tronc_arbre{
+            stroke: rgb(122, 51, 3);
+            }
+            .porte{
+                fill: rgba(46, 44, 42, 0.877);
+            }
+            .toit{
+                fill:rgb(247, 205, 169);
+            }
+            .puit{
+                fill:rgb(156, 157, 158);
+            }
+        </style>
+    </head>
+    <body>
+    </body>
+    <script>
+        svg=d3.select("body")
+        .append("svg")
+        .attr("width",1100)
+        .attr("height",600)
+        .attr("transform","translate(200,100)")
+        .attr("class","fond");
+        // les gradients
+        defs=svg.append("defs");
+        soleil=defs.append("linearGradient")
+        .attr("id","soleil")
+        .attr("x1","0%")
+        .attr("y1","0%")
+        .attr("x2","80%")
+        .attr("y2","100%");
+        soleil.append("stop")
+        .attr("offset","0%")
+        .style("stop-color","rgb(253,141,17)")
+        .style("stop-opacity",1);
+        soleil.append("stop")
+        .attr("offset","100%")
+        .style("stop-color","rgb(255,255,0)")
+        .style("stop-opacity",1);
+        // end gradient
+        g=svg.append("g")
+        .attr("transform","translate(40,-20)");
+        traitGauche=120
+        traitDroite=60
+        place1=0
+        place2=0
+        for(i=0;i<3;i++){
+            place1=traitDroite-30
+            place2=traitGauche-30
+           g.append("rect")
+           .attr("x",i*150)
+           .attr("y",530)
+           .attr("width",120)
+           .attr("height",150)
+           .attr("transform","translate("+20*i+",0)")
+           .attr("stroke","black")
+           .attr("stroke-width",3)
+           .attr("class","case");
+           
+           g.append("rect")
+           .attr("x",35+i*170)
+           .attr("y",570)
+           .attr("width",40)
+           .attr("height",60)
+           .attr("class","porte")
+           .attr("stroke","black")
+           .attr("stroke-width",3)
+           .attr("transform","translate(5,0)");
+
+           g.append("polyline")
+           .attr("points",""+i*150+" 530 "+traitDroite+" 450 "+traitGauche+" 530 "+i*150+" 530")
+           .attr("transform","translate("+20*i+",0)")
+           .attr("stroke","black")
+           .attr("stroke-width",3)
+           .attr("class","toit");
+
+           g.append("polyline")
+           .attr("points",""+traitDroite+" 450 "+place1+" 410 "+place2+" 410 "+traitDroite+" 450 ")
+           .attr("transform","translate("+20*i+",0)")
+           .attr("stroke","black")
+           .attr("stroke-width",3)
+           .attr("class","toit");
+           traitGauche+=150+10*i-i*10
+           traitDroite+=150+10*i-i*10
+           
+        }
+        // le soleil
+        svg.append("circle")
+        .attr("cx",900)
+        .attr("cy",100)
+        .attr("r",50)
+        .attr("fill","url(#soleil)");
+
+        // les oiseaux
+        svg.append("path")
+        .attr("d","M 680 200 C 800 210 660 230 755 185")
+        .attr("stroke","black")
+        .attr("stroke-width",8)
+        .style("fill","none");
+        svg.append("path")
+        .attr("d","M 750 150 C 850 150 750 170 800 130")
+        .attr("stroke","black")
+        .attr("stroke-width",8)
+        .style("fill","none");
+        svg.append("path")
+        .attr("d","M 810 220 C 900 220 800 240 850 205")
+        .attr("stroke","black")
+        .attr("stroke-width",8)
+        .style("fill","none");
+        svg.append("path")
+        .attr("d","M 590 100 C 710 110 570 130 685 85")
+        .attr("stroke","black")
+        .attr("stroke-width",8)
+        .style("fill","none");
+        svg.append("path")
+        .attr("d","M 740 60 C 870 110 710 90 835 65")
+        .attr("stroke","black")
+        .attr("stroke-width",8)
+        .style("fill","none");
+        svg.append("path")
+        .attr("d","M 955 80 C 1040 80 940 120 1000 65")
+        .attr("stroke","black")
+        .attr("stroke-width",8)
+        .style("fill","none");
+        // la corde de la puit
+        svg.append("path")
+        .attr("d", "M 945,580 q10,-200 30,0 ")
+        .style("fill","transparent")
+        .attr("stroke","black")
+        .attr("stroke-width",4);
+        //la puit
+        svg.append("rect")
+        .attr("x",860)
+        .attr("y",530)
+        .attr("width",120)
+        .attr("height",70)
+        .attr("class","puit")
+        .attr("stroke","black")
+        .attr("transform","translate(40,0)");
+        //la barre de la puit
+        svg.append("path")
+        .attr("d","M 850,470 q90,20 220,0")
+        .style("fill","transparent")
+        .attr("stroke","brown")
+        .attr("stroke-width",5);
+
+        svg.append("circle")
+        .attr("cx",958)
+        .attr("cy",485)
+        .attr("r",7)
+        .attr("class","puit");
+        svg.append("circle")
+        .attr("cx",958)
+        .attr("cy",485)
+        .attr("r",5)
+        .attr("fill","black");
+        //le tronc d'arbre
+        svg.append("path")
+        .attr("d","M 720 600 C 700 575 745 555 720 520 S 770 500 710 450 ")
+        .attr("class","tronc_arbre")
+        .attr("fill","none")
+        .attr("stroke-width",20);
+        //les barres de la puit 
+        svg.append("path")
+        .attr("d","M 875 600 C 873 555 877 580 868 555 S 885 525 875 515 865 500 865 490 875 500 855 465")
+        .attr("class","tronc_arbre")
+        .attr("fill","none")
+        .attr("stroke-width",7);
+        svg.append("line")
+        .attr("x1",868)
+        .attr("y1",485)
+        .attr("x2",880)
+        .attr("y2",465)
+        .attr("class","tronc_arbre")
+        .attr("fill","none")
+        .attr("stroke-width",7);
+        svg.append("path")
+        .attr("d","M 1050 600 C 1050 510 1052 515 1048 520 S 1040 500 1052 495 1045 480 1040 465 1040 465 ")
+        .attr("class","tronc_arbre")
+        .attr("fill","none")
+        .attr("stroke-width",7);
+        svg.append("line")
+        .attr("x1",1055)
+        .attr("y1",485)
+        .attr("x2",1065)
+        .attr("y2",465)
+        .attr("class","tronc_arbre")
+        .attr("fill","none")
+        .attr("stroke-width",7);
+        //la barre de la puit
+        svg.append("path")
+        .attr("d","M 850,470 q90,20 220,0")
+        .style("fill","transparent")
+        .attr("class","tronc_arbre")
+        .attr("stroke-width",6);
+        svg.append("path")
+        .attr("d"," M 660 350 Q 670 310 690 350 720 310 740 350 750 310 770 350 810 340 780 380 810 380 780 400 800 420 770 420 790 460 730 445 720 475 690 445 670 475 645 420 620 415 645 385 620 365 660 350")
+        .style("fill","green");
+    </script>
+</html>
