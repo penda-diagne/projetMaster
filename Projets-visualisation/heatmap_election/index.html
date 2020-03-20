@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script src="JS/d3.js"></script>
+    <style>
+        .axis {
+            font: 10px sans-serif;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        #tooltip {
+            position: absolute;
+            text-align: center;
+            max-width: 70px;
+            max-height: 30px;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            margin-top: -30px;
+            font: 10px sans-serif;
+            background: black;
+            color: white;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Visualisation des donnees électorales 2019 du Sénégal</h2>
+    <h3>Carte de chaleur</h3>
+    <div id="heatmap"></div>
+    <form>
+        <label>Selectionner un pole :</label>
+        <select id="choix" onchange="chartbar()">
+            <option>Choisir une option</option>
+            <option>Macky Sall</option>
+            <option>Idrissa seck</option>
+            <option>Madicke Niang</option>
+            <option>Cheikh Issa Sall</option>
+            <option>Ousmane Sonko</option>
+        </select>
+    </form>
+
+    <h3>Chart bar</h3>
+    <svg id="msda" width="1000" height="300"></svg>
+    <div id="tooltip"></div>
+
+    <script>
+        //carte de chaleur
+        //definition des dimension et de marges
+        var margin = { top: 10, right: 100, bottom: 40, left: 30 },
+            width = 1200 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom,
+            gridSize = Math.floor(width / 14),
+            legendElementWidth = gridSize,
+            buckets = 1500,
+            //tableaux contenant l'echelle de couleur,la legende,les days et times du heatmap
+            colors = ["yellow", "orange", "red"],
+            niveau = ["nombre de voix faible", "nombre de voix moyen", "nombre de voix elevé"]
+        days = ["M.Sall ", "O.Sonko ", "C.I.Sall ", "M.Niang", "I.Seck "];
+        times = ["Dakar", "Diourbel", "Fatik", "Kaffrine", "Kedougou", "kolda", "louga", "matam", "St.louis", "sedhiou", "T.counda", "Thies", "ziguinchor", "kaolack"]
+        //definition du svg
+        var svg = d3.select("#heatmap")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("tranform", "translate(" + margin.left + "," + margin.top + ")");
+        //axe des days
+        var dayslabel = svg.selectAll(".daylabel")
+            .data(days)
+            .enter()
+            .append("text")
+            .text(function (d) { return d })
+            .attr("x", 0)
+            .attr("y", function (d, i) { return i * 40 + 10; })
+            .style("text-anchor", "end")
+            .attr("transform", "translate(60," + (gridSize / 2.5) + ")")
+            .attr("class", function (d, i) { return ((i >= 13 && i <= 7) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
+        //axe des times
+        var timesLabel = svg.selectAll(".timelabel")
+            .data(times)
+            .enter()
+            .append("text")
+            .text(function (d) { return d })
+            .attr("x", function (d, i) { return i * gridSize; })
+            .attr("y", 0)
+            .style("text-anchor", "middle")
+            .attr("transform", "translate(105, 15)")
+            .attr("class", function (d, i) { return ((i >= 7 && i <= 14) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
+
+        //construction du heatmap
+        //extraction des donnees a partir du fichier: donnee.tsv
+        d3.tsv("donnee.tsv",
+            function (d) {
+                return {
+                    region: +d.region,
+                    day: +d.day,
+                    hour: +d.hour,
+                    voix: +d.voix,
+                };
+            },
+            function (error, data) {
+                var colorScale = d3.scale.quantile()
+                    .domain([d3.min(data, function (d) { return d.voix; }), buckets - 1, d3.max(data, function (d) { return d.voix; })])
+                    .range(colors);
+                //ajout des rectangles et configuration de ces derniers
+                var cards = svg.selectAll(".hour")
+                    .data(data)
+                cards.enter().append("rect")
+                    .attr("x", function (d) { return (d.hour - 1) * gridSize + 65; })
+                    .attr("y", function (d) { return (d.day - 1) * 40 + 20; })
+                    .attr("rx", 1.5)
+                    .attr("ry", 1.5)
+                    .attr("width", gridSize)
+                    .attr("height", 40)
+                    .style("stroke", "white")
+                    .style("stroke-opacity", 0.6)
+                    .style("fill", function (d) { return colorScale(d.count) })
+                    //ajout du tooltip avec l'evenement mouseover
+                    .on("mouseover", function (d) {
+                        div
+                            .transition()
+                            .duration(200)
+                            .style("opacity", 0.9);
+                        div
+                            .html("nombre de voix : " + d.voix)
+                            .style("left", d3.event.pageX + 10 + "px")
+                            .style("top", d3.event.pageY - 50 + "px");
+                    })
+                    .on("mouseout", function (d) {
+                        div
+                            .transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    })
+
+                cards.transition().duration(2000)
+                    .style("fill", function (d) { return colorScale(d.voix); });
+
+                cards.select("title").text(function (d) { return d.voix; });
+
+            });
+        //configuration du legende
+        legend = svg.append("g");
+        for (i = 0; i < 3; i++) {
+            legend.append("rect")
+                .attr("x", 180 + 300 * i)
+                .attr("y", 300)
+                .attr("width", 100)
+                .attr("height", 30)
+                .attr("fill", colors[i]);
+            legend.append("text")
+                .attr("x", 300 + 300 * i)
+                .attr("y", 320)
+                .text(niveau[i]);
+        }
+        //div contenant le tooltip
+        var div = d3
+            .select("#tooltip")
+            .attr("x", width - 600)
+            .attr("y", 0)
+            .style("opacity", 0);
+
+        //construction du chart bar
+        function chartbar() {
+            //suppression du diagramme
+            var card = d3.select("#msda");
+            var content = card.selectAll('*');
+            content.remove();
+            //definition des marges
+            var margin = { top: 20, right: 170, bottom: 200, left: 70 },
+                width = 1000 - margin.left - margin.right,
+                height = 450 - margin.top - margin.bottom;
+            //definition du svg
+            var svg = d3.select("#msda")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.right)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            //recuperation du candidat selectionné
+            candidat = document.getElementById("choix").selectedOptions[0].text;
+            file = "donnees/" + candidat + ".csv";
+            d3.csv(file, function (error, data) {
+                data.forEach(function (d) {
+                    d.region = d.region;
+                    d.voix = +d.voix;
+                    d.couleur = d.couleur;
+                });
+                //definition des echelles
+                var A = d3.scale.ordinal().rangeRoundBands([0, width], 0.1);
+
+                var B = d3.scale.linear().range([height, 0]);
+                var xAxis = d3.svg.axis().scale(A).orient("bottom");
+
+                var yAxis = d3.svg.axis().scale(B).orient("left");
+
+                B.domain([
+                    0,
+                    d3.max(data, function (d) {
+                        return +d.voix;
+                    })
+                ]);
+
+                A.domain(
+                    data.map(function (d) {
+                        return d.region;
+                    })
+                );
+                //ajout des axes
+                svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
+
+                svg.append("g")
+                    .attr("class", "y axis")
+                    .call(yAxis);
+
+                //ajout des bars
+                svg
+                    .selectAll("rectangle")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("fill", function (d) {
+                        return d.couleur;
+                    })
+                    .transition()
+                    .duration(2000)
+                    .attr("class", "rectangle")
+                    .attr("width", width / data.length - 10)
+                    .attr("height", function (d) {
+                        return height - B(+d.voix);
+                    })
+                    .attr("x", function (d, i) {
+                        return (width / data.length) * i + 10;
+                    })
+                    .attr("y", function (d) {
+                        return B(+d.voix);
+                    });
+
+
+            });
+
+
+
+        }
+
+    </script>
+</body>
+
+</html>
